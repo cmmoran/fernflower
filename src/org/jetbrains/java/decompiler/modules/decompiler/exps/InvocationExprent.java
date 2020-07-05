@@ -212,7 +212,7 @@ public class InvocationExprent extends Exprent {
       if (isBoxingCall() && canIgnoreBoxing) {
         // process general "boxing" calls, e.g. 'Object[] data = { true }' or 'Byte b = 123'
         // here 'byte' and 'short' values do not need an explicit narrowing type cast
-        ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, false, false, tracer);
+        ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, false, false, null, tracer);
         return buf;
       }
 
@@ -342,15 +342,36 @@ public class InvocationExprent extends Exprent {
       }
     }
 
+    String generic = null;
+
+/*
+    MethodWrapper methodWrapper = (MethodWrapper) DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
+
+    StructGenericSignatureAttribute attr = methodWrapper == null ? null : methodWrapper.methodStruct.getAttribute(StructGenericSignatureAttribute.ATTRIBUTE_SIGNATURE);
+*/
+
     boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
     for (int i = start; i < lstParameters.size(); i++) {
       if (mask == null || mask.get(i) == null) {
         TextBuffer buff = new TextBuffer();
         boolean ambiguous = setAmbiguousParameters.get(i);
+/*
+        if(!isEnum && attr != null) {
+          GenericMethodDescriptor genericMethodDescriptor = GenericMain.parseMethodSignature(attr.getSignature());
+          if(genericMethodDescriptor != null) {
+            if(genericMethodDescriptor.parameterTypes != null && genericMethodDescriptor.parameterTypes.size() > i && genericMethodDescriptor.parameterTypes.get(i).getArguments() != null && genericMethodDescriptor.parameterTypes.get(i).getArguments().size() > i) {
+              GenericType type = genericMethodDescriptor.parameterTypes.get(i).getArguments().get(i);
+              if(type != null) {
+                generic = GenericMain.getGenericCastTypeName(type);
+              }
+            }
+          }
+        }
+*/
 
         // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
-        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, true, true, tracer);
+        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, true, true, generic, tracer);
 
         // the last "new Object[0]" in the vararg call is not printed
         if (buff.length() > 0) {

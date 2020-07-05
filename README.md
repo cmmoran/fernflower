@@ -5,9 +5,9 @@ probably for a high-level programming language in general. Naturally it is still
 under development, please send your bug reports and improvement suggestions to the
 [issue tracker](https://youtrack.jetbrains.com/newIssue?project=IDEA&clearDraft=true&c=Subsystem+Decompiler).
 
-### Licence
+### License
 
-Fernflower is licenced under the [Apache Licence Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+Fernflower is licensed under the [Apache License Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
 ### Running from command line
 

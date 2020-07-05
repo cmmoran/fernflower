@@ -6,8 +6,8 @@ import org.jetbrains.java.decompiler.code.Instruction;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
@@ -24,9 +24,12 @@ import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.*;
+
+import static org.jetbrains.java.decompiler.main.ClassWriter.isSimpleLambda;
 
 public class ExprProcessor implements CodeConstants {
   public static final String UNDEFINED_TYPE_STRING = "<undefinedtype>";
@@ -795,6 +798,9 @@ public class ExprProcessor implements CodeConstants {
     if (lst == null || lst.isEmpty()) {
       return new TextBuffer();
     }
+    MethodWrapper methodWrapper = (MethodWrapper) DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
+
+    boolean simpleLambda = isSimpleLambda(methodWrapper);
 
     TextBuffer buf = new TextBuffer();
 
@@ -809,16 +815,20 @@ public class ExprProcessor implements CodeConstants {
 
       if (content.length() > 0) {
         if (expr.type != Exprent.EXPRENT_VAR || !((VarExprent)expr).isClassDef()) {
-          buf.appendIndent(indent);
+          if(!simpleLambda) {
+            buf.appendIndent(indent);
+          }
         }
         buf.append(content);
         if (expr.type == Exprent.EXPRENT_MONITOR && ((MonitorExprent)expr).getMonType() == MonitorExprent.MONITOR_ENTER) {
           buf.append("{}"); // empty synchronized block
         }
-        if (endsWithSemicolon(expr)) {
+        if (!simpleLambda && endsWithSemicolon(expr)) {
           buf.append(";");
         }
-        buf.appendLineSeparator();
+        if(!simpleLambda) {
+          buf.appendLineSeparator();
+        }
         tracer.incrementCurrentSourceLine();
       }
     }
@@ -852,7 +862,7 @@ public class ExprProcessor implements CodeConstants {
                                          int indent,
                                          boolean castNull,
                                          BytecodeMappingTracer tracer) {
-    return getCastedExprent(exprent, leftType, buffer, indent, castNull, false, false, false, tracer);
+    return getCastedExprent(exprent, leftType, buffer, indent, castNull, false, false, false, null, tracer);
   }
 
   public static boolean getCastedExprent(Exprent exprent,
@@ -863,6 +873,7 @@ public class ExprProcessor implements CodeConstants {
                                          boolean castAlways,
                                          boolean castNarrowing,
                                          boolean unbox,
+                                         String genericType,
                                          BytecodeMappingTracer tracer) {
 
     if (unbox) {
@@ -882,7 +893,7 @@ public class ExprProcessor implements CodeConstants {
     boolean cast =
       castAlways ||
       (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
-      (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
+      (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType)) && leftType.type != TYPE_OBJECT) ||
       (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
 
     boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
@@ -898,6 +909,9 @@ public class ExprProcessor implements CodeConstants {
     }
 
     if (cast) buffer.append('(').append(getCastTypeName(leftType)).append(')');
+    if(genericType != null) {
+      buffer.append('(').append(genericType).append(')');
+    }
 
     if (quote) buffer.append('(');
 

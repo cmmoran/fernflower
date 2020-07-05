@@ -13,6 +13,9 @@ import org.jetbrains.java.decompiler.struct.StructContext;
 import java.util.Map;
 import java.util.Objects;
 
+import static org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences.INDENT_STRING;
+import static org.jetbrains.java.decompiler.util.TextUtil.append;
+
 public class DecompilerContext {
   public static final String CURRENT_CLASS = "CURRENT_CLASS";
   public static final String CURRENT_CLASS_WRAPPER = "CURRENT_CLASS_WRAPPER";
@@ -88,6 +91,13 @@ public class DecompilerContext {
 
   public static boolean getOption(String key) {
     return "1".equals(getProperty(key));
+  }
+
+  public static String getIndentString() {
+    int indentLength = (Integer) getCurrentContext().properties.get(INDENT_STRING);
+    StringBuilder sb = new StringBuilder();
+    append(sb, " ", indentLength);
+    return sb.toString();
   }
 
   public static String getNewLineSeparator() {

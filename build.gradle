@@ -1,5 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 apply plugin: 'java'
+apply plugin: 'idea'
 
 compileJava {
   sourceCompatibility '1.8'
@@ -8,7 +9,7 @@ compileJava {
 
 sourceSets {
   main.java.srcDirs 'src'
-  test.java.srcDirs 'test'
+  test.java.srcDirs 'test', 'testData/src'
 }
 
 repositories { jcenter() }
@@ -22,4 +23,26 @@ jar {
   manifest {
     attributes 'Main-Class': 'org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler'
   }
+}
+
+task deployTest(type: Copy) {
+    group = BasePlugin.BUILD_GROUP
+    dependsOn compileTestJava
+    doFirst {
+        logger.lifecycle("Copying test classes to testData")
+    }
+    from 'build/classes/java/test/pkg'
+    into 'testData/classes/pkg'
+    include "**/*.class"
+}
+
+task deploy(type: Copy) {
+    group = BasePlugin.BUILD_GROUP
+    dependsOn jar
+    doFirst {
+        logger.lifecycle("Copying fernflower.jar -> ~/.bin/fernflower.jar")
+    }
+    from 'build/libs/fernflower.jar'
+    into "${System.getProperty('user.home')}/.bin/"
+    include "**/fernflower.jar"
 }

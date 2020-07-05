@@ -6,7 +6,6 @@ package org.jetbrains.java.decompiler.util;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 
 import java.util.Arrays;
@@ -30,7 +29,7 @@ public class TextUtil {
   public static String getIndentString(int length) {
     if (length == 0) return "";
     StringBuilder buf = new StringBuilder();
-    String indent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
+    String indent = DecompilerContext.getIndentString();
     append(buf, indent, length);
     return buf.toString();
   }

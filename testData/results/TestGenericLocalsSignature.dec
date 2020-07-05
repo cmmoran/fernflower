@@ -1,0 +1,37 @@
+package pkg;
+
+import java.util.function.Consumer;
+
+public class TestGenericLocalsSignature {
+   public static void main(String[] args) {
+      new TestGenericLocalsSignature.Buildable<String>() {
+      };
+   }// 31
+
+   public interface Buildable<T> {
+      default T with(Consumer<T> consumer) {
+         consumer.accept((T)this);// 24
+         return (T)this;// 25
+      }
+   }
+}
+
+class 'pkg/TestGenericLocalsSignature' {
+   method 'main ([Ljava/lang/String;)V' {
+      8      8
+   }
+}
+
+class 'pkg/TestGenericLocalsSignature$Buildable' {
+   method 'with (Ljava/util/function/Consumer;)Ljava/lang/Object;' {
+      2      12
+      8      13
+   }
+}
+
+Lines mapping:
+24 <-> 13
+25 <-> 14
+31 <-> 9
+Not mapped:
+29

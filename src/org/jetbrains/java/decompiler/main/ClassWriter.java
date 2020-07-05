@@ -66,7 +66,9 @@ public class ClassWriter {
     boolean lambdaToAnonymous = DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS);
 
     ClassNode outerNode = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
+    boolean outerLambda = DecompilerContext.getProperty("lambda") != null;
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, node);
+    DecompilerContext.setProperty("lambda", "");
 
     BytecodeMappingTracer tracer = new BytecodeMappingTracer(origTracer.getCurrentSourceLine());
 
@@ -119,22 +121,48 @@ public class ClassWriter {
 
           buffer.append(") ->");
         }
-
-        buffer.append(" {").appendLineSeparator();
-        tracer.incrementCurrentSourceLine();
+        boolean simpleLambda = isSimpleLambda(methodWrapper);
+        if(!simpleLambda) {
+          buffer.append(" {").appendLineSeparator();
+          tracer.incrementCurrentSourceLine();
+        } else {
+          buffer.append(" ");
+        }
 
         methodLambdaToJava(node, wrapper, mt, buffer, indent + 1, !lambdaToAnonymous, tracer);
 
-        buffer.appendIndent(indent).append("}");
-
+        if(!simpleLambda) {
+          buffer.appendIndent(indent).append("}");
+        }
         addTracer(cl, mt, tracer);
       }
     }
     finally {
       DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, outerNode);
+      DecompilerContext.setProperty("lambda", outerLambda ? "" : null);
     }
 
     DecompilerContext.getLogger().endWriteClass();
+  }
+
+  public static boolean isSimpleLambda(MethodWrapper methodWrapper) {
+    if (DecompilerContext.getProperty("lambda") != null
+        && methodWrapper.graph.nodes.size() <= 2
+        && methodWrapper.graph.first != null
+        && methodWrapper.graph.first.exprents != null
+        && methodWrapper.graph.first.exprents.size() == 1) {
+      Exprent asn = methodWrapper.graph.first.exprents.get(0);
+      MethodDescriptor desc =
+          MethodDescriptor.parseDescriptor(methodWrapper.methodStruct.getDescriptor());
+      if (asn != null
+          && desc.ret.type == CodeConstants.TYPE_VOID
+          && asn.type == Exprent.EXPRENT_ASSIGNMENT) {
+        AssignmentExprent aasn = (AssignmentExprent) asn;
+        return (aasn.getLeft().type != Exprent.EXPRENT_VAR);
+      }
+      return true;
+    }
+    return false;
   }
 
   public void classToJava(ClassNode node, TextBuffer buffer, int indent, BytecodeMappingTracer tracer) {
@@ -399,9 +427,11 @@ public class ClassWriter {
       }
     }
 
+    boolean isGenType = false;
     if (!isEnum) {
       if (descriptor != null) {
         buffer.append(GenericMain.getGenericCastTypeName(descriptor.type));
+        isGenType = true;
       }
       else {
         buffer.append(ExprProcessor.getCastTypeName(fieldType));
@@ -431,6 +461,9 @@ public class ClassWriter {
 
         if (initializer.type == Exprent.EXPRENT_CONST) {
           ((ConstExprent) initializer).adjustConstType(fieldType);
+        }
+        if(initializer.type == Exprent.EXPRENT_NEW) {
+          ((NewExprent) initializer).setGenTyped(isGenType);
         }
 
         // FIXME: special case field initializer. Can map to more than one method (constructor) and bytecode instruction

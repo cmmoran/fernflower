@@ -11,6 +11,8 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericFieldDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
@@ -106,6 +108,8 @@ public class AssignmentExprent extends Exprent {
           if (field.isStatic() && fd.hasModifier(CodeConstants.ACC_FINAL)) {
             fieldInClassInit = true;
           }
+          GenericFieldDescriptor genericFieldDescriptor = GenericMain.parseFieldSignature(fd.getDescriptor());
+          field.setGenTyped(genericFieldDescriptor != null && genericFieldDescriptor.type.getArguments().size() > 0);
           if (node.getWrapper() != null && node.getWrapper().getHiddenMembers().contains(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()))) {
             hiddenField = true;
           }
@@ -128,6 +132,16 @@ public class AssignmentExprent extends Exprent {
 
     if (right.type == EXPRENT_CONST) {
       ((ConstExprent) right).adjustConstType(leftType);
+    }
+    if(left.type == EXPRENT_VAR && right.type == EXPRENT_NEW) {
+      if(((VarExprent) left).isTyped()) {
+        ((NewExprent) right).setGenTyped(true);
+      }
+    }
+    if(left.type == EXPRENT_FIELD && right.type == EXPRENT_NEW) {
+      if(((FieldExprent) left).isGenTyped()) {
+        ((NewExprent) right).setGenTyped(true);
+      }
     }
 
     TextBuffer res = right.toJava(indent, tracer);

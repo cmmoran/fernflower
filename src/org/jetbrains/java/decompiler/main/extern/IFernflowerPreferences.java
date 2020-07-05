@@ -61,7 +61,7 @@ public interface IFernflowerPreferences {
     defaults.put(DECOMPILE_ASSERTIONS, "1");
     defaults.put(HIDE_EMPTY_SUPER, "1");
     defaults.put(HIDE_DEFAULT_CONSTRUCTOR, "1");
-    defaults.put(DECOMPILE_GENERIC_SIGNATURES, "0");
+    defaults.put(DECOMPILE_GENERIC_SIGNATURES, "1");
     defaults.put(NO_EXCEPTIONS_RETURN, "1");
     defaults.put(ENSURE_SYNCHRONIZED_MONITOR, "1");
     defaults.put(DECOMPILE_ENUM, "1");
@@ -85,7 +85,7 @@ public interface IFernflowerPreferences {
     defaults.put(MAX_PROCESSING_METHOD, "0");
     defaults.put(RENAME_ENTITIES, "0");
     defaults.put(NEW_LINE_SEPARATOR, (InterpreterUtil.IS_WINDOWS ? "0" : "1"));
-    defaults.put(INDENT_STRING, "   ");
+    defaults.put(INDENT_STRING, 2);
     defaults.put(BANNER, "");
     defaults.put(UNIT_TEST_MODE, "0");
     defaults.put(DUMP_ORIGINAL_LINES, "0");

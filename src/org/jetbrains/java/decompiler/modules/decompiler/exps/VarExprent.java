@@ -42,6 +42,7 @@ public class VarExprent extends Exprent {
   private int version = 0;
   private boolean classDef = false;
   private boolean stack = false;
+  private boolean typed = false;
 
   public VarExprent(int index, VarType varType, VarProcessor processor) {
     this(index, varType, processor, -1);
@@ -149,6 +150,7 @@ public class VarExprent extends Exprent {
                 GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(signature);
                 if (descriptor != null) {
                   buffer.append(GenericMain.getGenericCastTypeName(descriptor.type));
+                  typed = true;
                   return;
                 }
               }
@@ -264,5 +266,13 @@ public class VarExprent extends Exprent {
     }
 
     return true;
+  }
+
+  public boolean isTyped() {
+    return typed;
+  }
+
+  public void setTyped(boolean typed) {
+    this.typed = typed;
   }
 }

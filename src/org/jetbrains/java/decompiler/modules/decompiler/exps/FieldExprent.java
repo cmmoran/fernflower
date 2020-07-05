@@ -31,6 +31,7 @@ public class FieldExprent extends Exprent {
   private final boolean isStatic;
   private Exprent instance;
   private final FieldDescriptor descriptor;
+  private boolean genTyped;
 
   public FieldExprent(LinkConstant cn, Exprent instance, Set<Integer> bytecodeOffsets) {
     this(cn.elementname, cn.classname, instance == null, instance, FieldDescriptor.parseDescriptor(cn.descriptor), bytecodeOffsets);
@@ -183,6 +184,14 @@ public class FieldExprent extends Exprent {
 
   public String getName() {
     return name;
+  }
+
+  public boolean isGenTyped() {
+    return genTyped;
+  }
+
+  public void setGenTyped(boolean genTyped) {
+    this.genTyped = genTyped;
   }
 
   // *****************************************************************************

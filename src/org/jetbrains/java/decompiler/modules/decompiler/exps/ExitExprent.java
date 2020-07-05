@@ -5,12 +5,16 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.attr.StructExceptionsAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -19,6 +23,8 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import static org.jetbrains.java.decompiler.main.ClassWriter.isSimpleLambda;
 
 public class ExitExprent extends Exprent {
 
@@ -68,22 +74,44 @@ public class ExitExprent extends Exprent {
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     tracer.addMapping(bytecode);
 
+    MethodWrapper methodWrapper = (MethodWrapper) DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
     if (exitType == EXIT_RETURN) {
-      TextBuffer buffer = new TextBuffer("return");
+
+      boolean simpleLambda = isSimpleLambda(methodWrapper);
+      TextBuffer buffer = new TextBuffer(simpleLambda ? "": "return");
 
       if (retType.type != CodeConstants.TYPE_VOID) {
-        buffer.append(' ');
-        ExprProcessor.getCastedExprent(value, retType, buffer, indent, false, tracer);
+        String generic = null;
+        if(!simpleLambda) {
+          buffer.append(' ');
+        }
+        if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
+          if (value.type == EXPRENT_NEW) {
+            if (methodWrapper.methodStruct.hasAttribute(StructGenericSignatureAttribute.ATTRIBUTE_SIGNATURE)) {
+              StructGenericSignatureAttribute attr = methodWrapper.methodStruct.getAttribute(StructGenericSignatureAttribute.ATTRIBUTE_SIGNATURE);
+              GenericMethodDescriptor genericMethodDescriptor = GenericMain.parseMethodSignature(attr.getSignature());
+              ((NewExprent) value).setGenTyped(genericMethodDescriptor != null && genericMethodDescriptor.returnType.getArguments().size() > 0);
+            }
+          }
+          if(value.type == EXPRENT_VAR) {
+            StructGenericSignatureAttribute attr = methodWrapper.methodStruct.getAttribute(StructGenericSignatureAttribute.ATTRIBUTE_SIGNATURE);
+            GenericMethodDescriptor genericMethodDescriptor = attr == null ? null : GenericMain.parseMethodSignature(attr.getSignature());
+            if(genericMethodDescriptor != null) {
+              generic = GenericMain.getGenericCastTypeName(genericMethodDescriptor.returnType);
+            }
+          }
+        }
+
+        ExprProcessor.getCastedExprent(value, retType, buffer, indent, false, false, false, false, generic, tracer);
       }
 
       return buffer;
     }
     else {
-      MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
       ClassNode node = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
 
-      if (method != null && node != null) {
-        StructExceptionsAttribute attr = method.methodStruct.getAttribute(StructGeneralAttribute.ATTRIBUTE_EXCEPTIONS);
+      if (methodWrapper != null && node != null) {
+        StructExceptionsAttribute attr = methodWrapper.methodStruct.getAttribute(StructGeneralAttribute.ATTRIBUTE_EXCEPTIONS);
 
         if (attr != null) {
           String classname = null;

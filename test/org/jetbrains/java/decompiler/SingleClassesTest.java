@@ -25,6 +25,7 @@ public class SingleClassesTest {
     fixture.setUp(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
                   IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
                   IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
+                  IFernflowerPreferences.INDENT_STRING, 3,
                   IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1");
   }
 
@@ -69,6 +70,7 @@ public class SingleClassesTest {
   @Test public void testInnerSignature() { doTest("pkg/TestInnerSignature"); }
   @Test public void testAnonymousSignature() { doTest("pkg/TestAnonymousSignature"); }
   @Test public void testLocalsSignature() { doTest("pkg/TestLocalsSignature"); }
+  @Test public void testGenericLocalsSignature() { doTest("pkg/TestGenericLocalsSignature"); }
   @Test public void testParameterizedTypes() { doTest("pkg/TestParameterizedTypes"); }
   @Test public void testShadowing() { doTest("pkg/TestShadowing", "pkg/Shadow", "ext/Shadow",
            "pkg/TestShadowingSuperClass"); }
@@ -153,6 +155,7 @@ public class SingleClassesTest {
     assertTrue(decompiledFile.isFile());
     File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
     assertTrue(referenceFile.isFile());
+//    System.out.printf("DEC: %s\n", getContent(decompiledFile));
     assertFilesEqual(referenceFile, decompiledFile);
   }
 

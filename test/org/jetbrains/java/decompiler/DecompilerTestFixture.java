@@ -24,7 +24,7 @@ public class DecompilerTestFixture {
   private File targetDir;
   private TestConsoleDecompiler decompiler;
 
-  public void setUp(String... optionPairs) throws IOException {
+  public void setUp(Object... optionPairs) throws IOException {
     assertThat(optionPairs.length % 2).isEqualTo(0);
 
     testDataDir = new File("testData");
@@ -50,7 +50,7 @@ public class DecompilerTestFixture {
     options.put(IFernflowerPreferences.LITERALS_AS_IS, "1");
     options.put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
     for (int i = 0; i < optionPairs.length; i += 2) {
-      options.put(optionPairs[i], optionPairs[i + 1]);
+      options.put((String) optionPairs[i], optionPairs[i + 1]);
     }
     decompiler = new TestConsoleDecompiler(targetDir, options);
   }
@@ -105,7 +105,7 @@ public class DecompilerTestFixture {
     }
   }
 
-  private static String getContent(File expected) {
+  public static String getContent(File expected) {
     try {
       return new String(InterpreterUtil.getBytes(expected), StandardCharsets.UTF_8).replace("\r\n", "\n");
     }

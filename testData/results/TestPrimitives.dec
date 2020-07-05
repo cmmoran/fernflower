@@ -165,7 +165,7 @@ public class TestPrimitives {
    }// 174
 
    void testCastRequired() {
-      HashMap<String, Byte> map = new HashMap();// 177
+      HashMap<String, Byte> map = new HashMap<>();// 177
       map.put("test", (byte)0);// 178
    }// 179
 }

@@ -13,7 +13,7 @@ public class TestVarArgCalls {
       String.format("Test: %d - %s", 123, "DEF");// 15
       Object[] data = new Object[]{"Hello"};// 17
       String.format("Test: %s", (Object)data);// 18
-      String.format("Test: %s", (Object[])data);// 19
+      String.format("Test: %s", data);// 19
    }// 20
 
    public void printAll(String fmt, String... params) {
@@ -62,8 +62,7 @@ class 'pkg/TestVarArgCalls' {
       b6      14
       ba      15
       bd      15
-      c0      15
-      c4      16
+      c1      16
    }
 
    method 'printAll (Ljava/lang/String;[Ljava/lang/String;)V' {

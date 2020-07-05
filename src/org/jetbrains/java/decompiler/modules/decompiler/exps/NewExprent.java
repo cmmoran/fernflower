@@ -26,13 +26,14 @@ import java.util.Set;
 public class NewExprent extends Exprent {
   private InvocationExprent constructor;
   private final VarType newType;
-  private List<Exprent> lstDims = new ArrayList<>();
+  private List<Exprent> lstDims;
   private List<Exprent> lstArrayElements = new ArrayList<>();
   private boolean directArrayInit;
   private boolean isVarArgParam;
   private boolean anonymous;
   private boolean lambda;
   private boolean enumConst;
+  private boolean genTyped;
 
   public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, Set<Integer> bytecodeOffsets) {
     this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
@@ -191,6 +192,9 @@ public class NewExprent extends Exprent {
         }
       }
 
+      if(genTyped) {
+        buf.append("<>");
+      }
       buf.append('(');
 
       if (!lambda && constructor != null) {
@@ -234,6 +238,7 @@ public class NewExprent extends Exprent {
       }
       else if (!selfReference) {
         TextBuffer clsBuf = new TextBuffer();
+        DecompilerContext.setProperty("lambda", null);
         new ClassWriter().classToJava(child, clsBuf, indent, tracer);
         buf.append(clsBuf);
         tracer.incrementCurrentSourceLine(clsBuf.countLines());
@@ -277,6 +282,9 @@ public class NewExprent extends Exprent {
       }
 
       if (constructor != null) {
+        if(genTyped) {
+          buf.append("<>");
+        }
         List<Exprent> parameters = constructor.getLstParameters();
         List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(constructor.getClassname(), constructor.getStringDescriptor(), parameters.size());
 
@@ -298,7 +306,7 @@ public class NewExprent extends Exprent {
                 buf.append(", ");
               }
 
-              ExprProcessor.getCastedExprent(expr, leftType, buf, indent, true, false, true, true, tracer);
+              ExprProcessor.getCastedExprent(expr, leftType, buf, indent, true, false, true, true, null, tracer);
 
               firstParam = false;
             }
@@ -334,6 +342,9 @@ public class NewExprent extends Exprent {
     }
     else {
       buf.append("new ").append(ExprProcessor.getTypeName(newType));
+      if(genTyped) {
+        buf.append("<>");
+      }
 
       if (lstArrayElements.isEmpty()) {
         for (int i = 0; i < newType.arrayDim; i++) {
@@ -484,5 +495,13 @@ public class NewExprent extends Exprent {
 
   public void setEnumConst(boolean enumConst) {
     this.enumConst = enumConst;
+  }
+
+  public boolean isGenTyped() {
+    return genTyped;
+  }
+
+  public void setGenTyped(boolean genTyped) {
+    this.genTyped = genTyped;
   }
 }
